@@ -11,13 +11,13 @@ export interface LlmRecoveryContext {
   readonly error: LlmRemoteErrorMessage;
   readonly messages: readonly Message[];
   readonly applied: readonly LlmRecoveryRecord[];
-  readonly credentials?: LlmCredentialProvider;
+  readonly credentialProvider?: LlmCredentialProvider;
 }
 
 export interface LlmRecoveryProposal {
   readonly action: string;
   readonly messages?: readonly Message[];
-  readonly prepare?: () => void;
+  readonly beforeNextAttempt?: () => void;
 }
 
 export interface LlmRecovery {

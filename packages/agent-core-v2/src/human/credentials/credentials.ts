@@ -7,18 +7,20 @@ import {
   type LlmCredentialProvider,
 } from '#/llm/requester/requester';
 
-export interface CredentialTokenSource {
+export interface AccessTokenResolver {
   (options?: { readonly force?: boolean }): Promise<string | undefined>;
 }
 
-export function staticCredentials(apiKey?: string): LlmCredentialProvider {
+export function createStaticCredentialProvider(apiKey?: string): LlmCredentialProvider {
   return {
     resolve: () =>
       apiKey === undefined || apiKey.trim().length === 0 ? undefined : { apiKey },
   };
 }
 
-export function oauthCredentials(getToken: CredentialTokenSource): LlmCredentialProvider {
+export function createOAuthCredentialProvider(
+  getToken: AccessTokenResolver,
+): LlmCredentialProvider {
   let refreshed: Promise<string | undefined> | undefined;
   return {
     resolve: async () => {
@@ -51,17 +53,17 @@ export function applyCredential(
 
 export async function resolveModelCredentials(
   model: LlmModel,
-  credentials: LlmCredentialProvider | undefined,
+  credentialProvider: LlmCredentialProvider | undefined,
 ): Promise<LlmModel> {
-  return applyCredential(model, await credentials?.resolve());
+  return applyCredential(model, await credentialProvider?.resolve());
 }
 
 const CREDENTIALS_RECOVERY_ID = 'credentials';
 
 export const credentialsRecovery: LlmRecovery = {
-  propose: ({ error, applied, credentials }) => {
+  propose: ({ error, applied, credentialProvider }) => {
     if (
-      credentials?.canRecover?.(error) !== true ||
+      credentialProvider?.canRecover?.(error) !== true ||
       applied.some((record) => record.strategy === CREDENTIALS_RECOVERY_ID)
     ) {
       return undefined;
@@ -69,7 +71,7 @@ export const credentialsRecovery: LlmRecovery = {
     return {
       strategy: CREDENTIALS_RECOVERY_ID,
       action: 'refresh',
-      prepare: () => credentials?.invalidate?.(),
+      beforeNextAttempt: () => credentialProvider?.invalidate?.(),
     };
   },
 };
