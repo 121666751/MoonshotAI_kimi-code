@@ -51,20 +51,13 @@ export function applyCredential(
   };
 }
 
-export async function resolveModelCredentials(
-  model: LlmModel,
-  credentialProvider: LlmCredentialProvider | undefined,
-): Promise<LlmModel> {
-  return applyCredential(model, await credentialProvider?.resolve());
-}
-
 const CREDENTIALS_RECOVERY_ID = 'credentials';
 
 export const credentialsRecovery: LlmRecovery = {
-  propose: ({ error, applied, credentialProvider }) => {
+  propose: ({ error, appliedRecoveries, credentialProvider }) => {
     if (
       credentialProvider?.canRecover?.(error) !== true ||
-      applied.some((record) => record.strategy === CREDENTIALS_RECOVERY_ID)
+      appliedRecoveries.some((record) => record.strategy === CREDENTIALS_RECOVERY_ID)
     ) {
       return undefined;
     }
