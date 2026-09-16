@@ -31,6 +31,7 @@ interface SkillWire {
   source: string;
   type?: string;
   disable_model_invocation?: boolean;
+  scopes?: string[];
 }
 
 describe('server-v2 /api/v1 skills', () => {
@@ -167,6 +168,22 @@ describe('server-v2 /api/v1 skills', () => {
       expect(docsSkill).toBeDefined();
       expect(docsSkill).toMatchObject({ source: 'builtin' });
       expect(docsSkill?.description.length).toBeGreaterThan(0);
+    });
+
+    it('exposes skill scope restrictions on the wire', async () => {
+      const id = await createSession();
+      const { body } = await getJson<{ skills: SkillWire[] }>(
+        `/api/v1/sessions/${id}/skills`,
+      );
+      expect(body.code).toBe(0);
+      const skills = listSkillsResponseSchema.parse(body.data).skills;
+
+      const customTheme = skills.find((s) => s.name === 'custom-theme');
+      expect(customTheme).toMatchObject({ source: 'builtin', scopes: ['tui'] });
+
+      const updateConfig = skills.find((s) => s.name === 'update-config');
+      expect(updateConfig).toBeDefined();
+      expect(updateConfig).not.toHaveProperty('scopes');
     });
   });
 
