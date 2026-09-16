@@ -14,12 +14,14 @@ export interface TranscriptSkillActivation {
 
 export type TranscriptUserOrigin = {
   readonly kind: 'user';
+  readonly clientMetadata?: readonly Readonly<Record<string, unknown>>[];
   readonly skillActivations?: readonly TranscriptSkillActivation[];
 } | {
   readonly kind: 'skill_activation';
   readonly trigger: 'user-slash';
   readonly skillName: string;
   readonly skillArgs?: string;
+  readonly clientMetadata?: readonly Readonly<Record<string, unknown>>[];
 };
 
 interface TextFrameBase {

@@ -62,6 +62,7 @@ import type {
 } from '@moonshot-ai/agent-core-v2/session/subagent/mirrorAgentRun';
 import {
   projectTranscriptUserOrigin,
+  projectTranscriptUserTurnOrigin,
   type AgentRef,
   type AgentUsageMeta,
   type StepHeader,
@@ -1316,6 +1317,7 @@ export class AgentTranscriptProjector {
       status: 'queued',
       userMessageId: prev?.userMessageId,
       content: projectPromptContentParts(event.content),
+      clientMetadata: event.clientMetadata ?? prev?.clientMetadata,
       createdAt: prev?.createdAt ?? nowIso(),
     }));
     return [{ op: 'prompt.upsert', prompt }];
@@ -1327,6 +1329,7 @@ export class AgentTranscriptProjector {
       status: prev !== undefined && isTerminalPromptStatus(prev.status) ? prev.status : event.status,
       userMessageId: event.userMessageId,
       content: projectPromptContentParts(event.content),
+      clientMetadata: event.clientMetadata ?? prev?.clientMetadata,
       createdAt: prev?.createdAt ?? event.createdAt,
       finishedAt: prev?.finishedAt,
       steeredAt: prev?.steeredAt,
@@ -1340,6 +1343,7 @@ export class AgentTranscriptProjector {
       status: 'running',
       userMessageId: prev?.userMessageId,
       content: prev?.content,
+      clientMetadata: prev?.clientMetadata,
       createdAt: prev?.createdAt ?? new Date().toISOString(),
       finishedAt: prev?.finishedAt,
       steeredAt: prev?.steeredAt,
@@ -1353,6 +1357,7 @@ export class AgentTranscriptProjector {
       status: event.reason ?? 'completed',
       userMessageId: prev?.userMessageId,
       content: prev?.content,
+      clientMetadata: prev?.clientMetadata,
       createdAt: prev?.createdAt ?? event.finishedAt,
       finishedAt: event.finishedAt,
       steeredAt: prev?.steeredAt,
@@ -1366,6 +1371,7 @@ export class AgentTranscriptProjector {
       status: 'aborted',
       userMessageId: prev?.userMessageId,
       content: prev?.content,
+      clientMetadata: prev?.clientMetadata,
       createdAt: prev?.createdAt ?? event.abortedAt,
       finishedAt: event.abortedAt,
       steeredAt: prev?.steeredAt,
@@ -1380,6 +1386,7 @@ export class AgentTranscriptProjector {
       status: prev?.status ?? 'running',
       userMessageId: prev?.userMessageId,
       content: projectPromptContentParts(event.content),
+      clientMetadata: prev?.clientMetadata,
       createdAt: prev?.createdAt ?? event.steeredAt,
       finishedAt: prev?.finishedAt,
       steeredAt: event.steeredAt,
@@ -1392,6 +1399,7 @@ export class AgentTranscriptProjector {
         status: 'completed',
         userMessageId: prev?.userMessageId,
         content: prev?.content,
+        clientMetadata: prev?.clientMetadata,
         createdAt: prev?.createdAt ?? event.steeredAt,
         finishedAt: event.steeredAt,
         steeredAt: event.steeredAt,
@@ -1567,7 +1575,7 @@ function mapTurnOrigin(origin: unknown): TurnOrigin {
   const kind = typeof candidate?.kind === 'string' ? candidate.kind : undefined;
   switch (kind) {
     case 'user':
-      return { kind: 'user', payload: origin };
+      return projectTranscriptUserTurnOrigin(origin);
     case 'cron_job':
     case 'cron_missed': {
       const jobId = (candidate as { jobId?: unknown }).jobId;

@@ -71,6 +71,7 @@ export const transcriptSkillActivationSchema = z.object({
 export const transcriptUserOriginSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('user'),
+    clientMetadata: z.array(z.record(z.string(), z.unknown())).optional(),
     skillActivations: z.array(transcriptSkillActivationSchema).optional(),
   }),
   z.object({
@@ -78,6 +79,7 @@ export const transcriptUserOriginSchema = z.discriminatedUnion('kind', [
     trigger: z.literal('user-slash'),
     skillName: z.string().min(1),
     skillArgs: z.string().optional(),
+    clientMetadata: z.array(z.record(z.string(), z.unknown())).optional(),
   }),
 ]);
 
@@ -368,6 +370,7 @@ export const transcriptPromptSchema = z.object({
   status: z.enum(['running', 'queued', 'blocked', 'completed', 'failed', 'aborted']),
   userMessageId: z.string().optional(),
   content: z.unknown().optional(),
+  clientMetadata: z.array(z.record(z.string(), z.unknown())).optional(),
   createdAt: z.string(),
   finishedAt: z.string().optional(),
   steeredAt: z.string().optional(),
