@@ -47,6 +47,7 @@ import { quoteShellArg } from '#/utils/shell-quote';
 import { restoreTerminalModes } from '#/utils/terminal-restore';
 
 import { BannerProvider } from './banner/banner-provider';
+import { resolveBannerAudienceContext, type BannerAudienceContext } from './banner/audience';
 import { readBannerDisplayState, writeBannerDisplayState } from './banner/state';
 import {
   BUILTIN_SLASH_COMMANDS,
@@ -692,9 +693,14 @@ export class KimiTUI {
     const provider = new BannerProvider(this.state.appState.version);
     const displayState = await readBannerDisplayState();
     const now = new Date();
+    const audience = this.harness.auth.getCachedAccessToken().then(
+      (accessToken) => resolveBannerAudienceContext(accessToken),
+      (): BannerAudienceContext => ({ login: 'unknown' }),
+    );
     const banner = await provider.load({
       state: displayState,
       now,
+      audience,
     });
     this.state.appState.banner = banner;
     if (banner === null) return;
